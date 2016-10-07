@@ -135,7 +135,8 @@ BaseCPU::BaseCPU(Params *p, bool is_checker)
       functionTraceStream(nullptr), currentFunctionStart(0),
       currentFunctionEnd(0), functionEntryTick(0),
       addressMonitor(p->numThreads),
-	  traceReg(false)
+	  traceReg(false), // YOHAN: Trace corrupted registers
+	  traceFU(false) // YOHAN: Trace corrupted scoreboard
 {
     // if Python did not provide a valid ID, do it here
     if (_cpuId == -1 ) {

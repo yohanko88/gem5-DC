@@ -733,6 +733,9 @@ class LSQ : public Named
 	
 	//HwiSoo, temporal function for checking values
 	void checkLSQData();
+    
+    //HwiSoo : LSQ FI, fault injection to LSQ
+    void injectFaultLSQFunc();
 };
 
 /** Make a suitable packet for the given request.  If the request is a store,

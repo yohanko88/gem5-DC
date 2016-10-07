@@ -580,7 +580,8 @@ class BaseCPU : public MemObject
     std::vector<AddressMonitor> addressMonitor;
 
   public:
-	bool traceReg; // YOHAN: Trace behaviors of fault injected register
+    bool traceReg; // YOHAN: Trace behaviors of fault injected registers
+    bool traceFU; //YOHAN: Trace behaviors of fault injected scoreboard
 
   public:
     void armMonitor(ThreadID tid, Addr address);

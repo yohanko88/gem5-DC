@@ -142,10 +142,17 @@ Pipeline::evaluate()
     }
     */
     cpu.injectFaultRegFunc();
+    
+    //HwiSoo : LSQ FI, temporal flip function call
+    //if(curTick()<=1602500)
+    if(curTick()<=254900)
+		execute.getLSQ().injectFaultLSQFunc();
+    
+    
 	
 	//HwiSoo, Temporal checking for lsq values
-	if(curTick()%5000 == 0)
-		execute.getLSQ().checkLSQData();
+	//if(curTick()%1000 == 0)
+	//	execute.getLSQ().checkLSQData();
 
     //ybkim: Fault injection on FU
     //TODO: move these flags to the pipeline

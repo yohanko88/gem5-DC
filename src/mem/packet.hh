@@ -1033,6 +1033,11 @@ class Packet : public Printable
             std::memcpy(getPtr<uint8_t>(), p, getSize());
     }
 
+    //HwiSoo : LSQ FI, temporal flip function
+    void
+    flipData (unsigned int injectIndex, unsigned int injectBit);
+    
+
     /**
      * Copy data into the packet from the provided block pointer,
      * which is aligned to the given block size.

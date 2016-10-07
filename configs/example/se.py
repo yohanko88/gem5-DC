@@ -259,8 +259,17 @@ for i in xrange(np):
         system.cpu[i].injectFaultFu = 1;
     if options.checkArch == "FU":
         system.cpu[i].checkFaultFu = 1;
-
-
+    #hwisoo
+    if options.injectArch == "LSQ":
+        system.cpu[i].injectFaultLSQ = 1;
+    if options.checkArch == "LSQ":
+        system.cpu[i].checkFaultLSQ = 1;
+    if options.injectLSQQueue == "storeBUffer":
+        system.cpu[i].injectFaultLSQstoreBuffer = 1;
+    if options.injectLSQQueue == "requests":
+        system.cpu[i].injectFaultLSQrequests = 1;
+    if options.injectLSQQueue == "transfers":
+        system.cpu[i].injectFaultLSQtransfers = 1;
     system.cpu[i].createThreads()
 
 if options.ruby:

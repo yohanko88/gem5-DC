@@ -1766,13 +1766,63 @@ LSQ::checkLSQData()
 		//DPRINTF(ShsTemp, "LSQ:packet->addr:%x\n", target->packet->getAddr()); //Error. finding way to check
 
 	}
-	
-	
-	
-	
-	
+    
+    if(!storeBuffer.slots.empty())
+    {
+        DPRINTF(ShsTemp, "Store buffer is not empty!\n");
+        
+    }
 	
 }
+
+
+//HwiSoo, fault injection function
+void 
+LSQ::injectFaultLSQFunc()
+{
+    
+    //packet data case
+    LSQRequest* target;
+    //temporally, storebuffer, first entry, data, first byte, 4th bit
+    int index=0;
+    bool injectFaultLSQData=true;
+    int injectByte=0;
+    int injectBit=4;
+    
+    
+    
+    DPRINTF(ShsTemp, "LSQ FI : curTick() = %d\n", curTick());
+    
+    //select target
+    if(index>=storeBuffer.slots.size())
+    {
+        DPRINTF(ShsTemp, "LSQ FI to storebuffer: index %d is not exist\n", index);
+        return;
+    }
+    else
+        target=storeBuffer.slots[index];
+    
+    
+    if(injectFaultLSQData)
+    {
+        if(!target->packet->hasData())
+        {
+            DPRINTF(ShsTemp, "LSQ FI to storebuffer: index %d packet does not have data\n", index);
+        }
+        else
+        {
+            target->packet->flipData(injectByte, injectBit);
+        }
+        
+    }
+    
+    
+    
+    
+    
+}
+
+
 
 }
 

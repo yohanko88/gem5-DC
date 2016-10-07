@@ -55,6 +55,7 @@
 #include "base/misc.hh"
 #include "base/trace.hh"
 #include "mem/packet.hh"
+#include "debug/ShsTemp.hh"
 
 using namespace std;
 
@@ -414,4 +415,32 @@ Packet::PrintReqState::printObj(Printable *obj)
 {
     printLabels();
     obj->print(os, verbosity, curPrefix());
+}
+
+
+//HwiSoo : LSQ FI, flip function
+void
+Packet::flipData (unsigned int injectIndex, unsigned int injectBit)
+{
+    DPRINTF(ShsTemp, "LSQ FI to packet data: injectIndex : %d, injectBit : %d\n", injectIndex, injectBit);
+    if(!hasData())
+    {
+        DPRINTF(ShsTemp, "LSQ FI to packet data: No Data\n");
+        return;
+    }
+    else if(injectIndex>=size)
+    {
+        DPRINTF(ShsTemp, "Size is smaller than target index\n");
+        return;
+    }
+    else
+    {
+        uint8_t originalByte = data[injectIndex];
+        uint8_t flipByte = 1;
+        data[injectIndex] = originalByte ^ (flipByte << (injectBit));
+        
+        //uint64_t bit_flip = intRegs[injectLoc/32] ^ (1UL << (injectLoc%32));
+        DPRINTF(ShsTemp, "LSQ FI to packet data: original data : 0x%x, corrupted data : 0x%x\n", originalByte, data[injectIndex]);
+    }    
+
 }

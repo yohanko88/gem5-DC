@@ -285,3 +285,6 @@ class MinorCPU(BaseCPU):
     checkFaultReg = Param.Unsigned(0, "Check a single-bit fault in Register or not (0: NO, 1: Yes)")
     #ybkim
     injectFaultFu = Param.Unsigned(0, "Inject a single-bit fault in Functional unit or not (0: NO, 1: Yes)")
+    
+    #HwiSoo, injectFaultLSQ;
+    injectFaultReg = Param.Unsigned(0, "Inject a single-bit fault in LSQ or not (0: NO, 1: Yes)")
