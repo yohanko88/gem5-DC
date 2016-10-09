@@ -145,8 +145,8 @@ Pipeline::evaluate()
     
     //HwiSoo : LSQ FI, temporal flip function call
     //if(curTick()<=1602500)
-    if(curTick()<=254900)
-		execute.getLSQ().injectFaultLSQFunc();
+    //if(curTick()<=254900)
+	//	execute.getLSQ().injectFaultLSQFunc();
     
     
 	
