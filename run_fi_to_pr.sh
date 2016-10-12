@@ -1,10 +1,11 @@
 GEM5_BINARY="./build/ARM/gem5.debug"
 TEST_PROG="tests/test-progs/hello/bin/arm/linux/hello"
-INJECT_TIME=1000000
+#INJECT_TIME=25567500
+INJECT_TIME=3000000
 INJECT_LOC=5
-INJECT_ARCH="FU"
+INJECT_ARCH="PipeReg"
 
-GEM5_OPTIONS=""
+GEM5_OPTIONS="--debug-flags=FI,MinorExecute -r"
 
 DEBUG_SCOREBOARD=false #set false to disable debug flag
 

@@ -58,7 +58,9 @@ Decode::Decode(const std::string &name,
     outputWidth(params.executeInputWidth),
     processMoreThanOneInput(params.decodeCycleInput),
     decodeInfo(params.numThreads),
-    threadPriority(0)
+    threadPriority(0),
+    //ybkim
+    injectFaultToPR(false)
 {
     if (outputWidth < 1)
         fatal("%s: executeInputWidth must be >= 1 (%d)\n", name, outputWidth);
@@ -345,6 +347,13 @@ Decode::minorTrace() const
 
     MINORTRACE("insts=%s\n", data.str());
     inputBuffer[0].minorTrace();
+}
+
+
+//ybkim
+void
+Decode::injectFault(unsigned injectLoc) {
+    return;
 }
 
 }

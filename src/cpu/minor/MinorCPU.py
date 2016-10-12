@@ -288,3 +288,7 @@ class MinorCPU(BaseCPU):
     
     #HwiSoo, injectFaultLSQ;
     injectFaultReg = Param.Unsigned(0, "Inject a single-bit fault in LSQ or not (0: NO, 1: Yes)")
+
+    #ybkim: pipeline register
+    injectFaultPR = Param.Unsigned(0, "Inject a single-bit fault in LSQ or not (0: NO, 1: Yes)")
+    pipeRegStage = Param.String("", "Which stage of the pipeline register a fault is injected to")

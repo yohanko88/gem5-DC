@@ -46,6 +46,9 @@
 #include "cpu/thread_context.hh"
 #include "enums/StaticInstFlags.hh"
 
+//ybkim
+#include "debug/FI.hh"
+
 // forward declarations
 class Packet;
 
@@ -185,11 +188,30 @@ class StaticInst : public RefCounted, public StaticInstFlags
 
     /// Return logical index (architectural reg num) of i'th destination reg.
     /// Only the entries from 0 through numDestRegs()-1 are valid.
-    RegIndex destRegIdx(int i) const { return _destRegIdx[i]; }
+    //RegIndex destRegIdx(int i) const { return _destRegIdx[i]; }
+    //ybkim
+    RegIndex destRegIdx(int i) const { 
+        if(!faultInjected || i != injectedIndex) {
+            return _destRegIdx[i];
+        } else {
+            DPRINTF(FI, "corrupted destRegIdx(%d) is read\n", injectedIndex);
+            return _faultyDestRegIdx[i];
+        }
+    }
 
     /// Return logical index (architectural reg num) of i'th source reg.
     /// Only the entries from 0 through numSrcRegs()-1 are valid.
     RegIndex srcRegIdx(int i)  const { return _srcRegIdx[i]; }
+    //ybkim
+    /*
+    RegIndex srcRegIdx(int i)  const { 
+        if(!faultInjected) {
+            return _srcRegIdx[i]; 
+        } else {
+            return _faultySrcRegIdx[i];
+        }
+    }
+    */
 
     /// Pointer to a statically allocated "null" instruction object.
     /// Used to give eaCompInst() and memAccInst() something to return
@@ -244,6 +266,40 @@ class StaticInst : public RefCounted, public StaticInstFlags
     virtual std::string
     generateDisassembly(Addr pc, const SymbolTable *symtab) const = 0;
 
+    //ybkim: Fault injection into instruction
+    //Components like dToE pipeline register saves data of
+    //instruction;
+    public:
+    bool faultInjected;
+    unsigned injectedIndex;
+    RegIndex _faultyDestRegIdx[MaxInstDestRegs];
+    RegIndex _faultySrcRegIdx[MaxInstSrcRegs];
+
+    void injectFault(unsigned loc) {
+        loc = loc % (sizeof(RegIndex) * MaxInstDestRegs);
+        unsigned index = loc / MaxInstDestRegs;
+        injectedIndex = index;
+        unsigned flip_loc = loc % MaxInstDestRegs;
+        for(int i=0; i<MaxInstDestRegs; i++) {
+            _faultyDestRegIdx[i] = _destRegIdx[i];
+        }
+        RegIndex mask = 1 << flip_loc;
+        _faultyDestRegIdx[index] = _faultyDestRegIdx[index] ^ mask;
+        _faultyDestRegIdx[index] %= MaxInstDestRegs;
+        if(_faultyDestRegIdx[index] == _destRegIdx[index]) {
+            _faultyDestRegIdx[index]++;
+        }
+        DPRINTF(FI, "fault is injected to the destRegIdx[%d]; from %d to %d\n", 
+                index, _destRegIdx[index], _faultyDestRegIdx[index]);
+        faultInjected = true;
+    }
+
+    void clearFault() {
+        faultInjected = false;
+    }
+
+    protected:
+
     /// Constructor.
     /// It's important to initialize everything here to a sane
     /// default, since the decoder generally only overrides
@@ -252,7 +308,9 @@ class StaticInst : public RefCounted, public StaticInstFlags
     StaticInst(const char *_mnemonic, ExtMachInst _machInst, OpClass __opClass)
         : _opClass(__opClass), _numSrcRegs(0), _numDestRegs(0),
           _numFPDestRegs(0), _numIntDestRegs(0), _numCCDestRegs(0),
-          machInst(_machInst), mnemonic(_mnemonic), cachedDisassembly(0)
+          machInst(_machInst), mnemonic(_mnemonic), cachedDisassembly(0),
+          //ybkim
+          faultInjected(false)
     { }
 
   public:

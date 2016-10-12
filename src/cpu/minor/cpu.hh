@@ -129,6 +129,9 @@ class MinorCPU : public BaseCPU
     unsigned injectFaultFu;
     bool injectFaultToFu;
     bool isFaultInjectedToFu;
+    //PR
+    bool injectFaultToPR;
+    bool isFaultInjectedToPR;
 
     void exitCallback();    
 

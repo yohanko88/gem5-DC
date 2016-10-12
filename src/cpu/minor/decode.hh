@@ -156,6 +156,10 @@ class Decode : public Named
      *  into Decode and on to Execute which is responsible for
      *  actually killing instructions */
     bool isDrained();
+
+    //ybkim:fault injection on PR
+    void injectFault(unsigned injectLoc);
+    bool injectFaultToPR;
 };
 
 }
