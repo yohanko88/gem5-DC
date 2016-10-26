@@ -50,6 +50,9 @@
 #include "debug/Quiesce.hh"
 #include "debug/ShsTemp.hh"
 
+//ybkim
+#include "debug/FI.hh"
+
 
 namespace Minor
 {
@@ -83,7 +86,10 @@ Pipeline::Pipeline(MinorCPU &cpu_, MinorCPUParams &params) :
         std::max(params.fetch2ToDecodeForwardDelay,
         std::max(params.decodeToExecuteForwardDelay,
         params.executeBranchDelay)))),
-    needToSignalDrained(false)
+    needToSignalDrained(false),
+    //ybkim
+    injectStage(params.pipeRegStage)
+
 {
     if (params.fetch1ToFetch2ForwardDelay < 1) {
         fatal("%s: fetch1ToFetch2ForwardDelay must be >= 1 (%d)\n",
@@ -169,6 +175,10 @@ Pipeline::evaluate()
 
     if (DTRACE(MinorTrace))
         minorTrace();
+
+    //ybkim: Fault injection into Pipeline Registers
+    if(!cpu.isFaultInjectedToPR && cpu.injectFaultToPR)
+        cpu.isFaultInjectedToPR = injectFaultToPR();
 
     /* Update the time buffers after the stages */
     f1ToF2.evaluate();
@@ -288,5 +298,37 @@ Pipeline::isDrained()
 
     return ret;
 }
+
+//ybkim
+bool
+Pipeline::injectFaultToPR()
+{
+    if(curTick() < cpu.injectTime) {
+        return false;
+    }
+
+    if(injectStage == "dToE") {
+        return injectFaultToFowardInstData(dToE);
+    }
+
+    return false;
+}
+
+bool
+Pipeline::injectFaultToFowardInstData(Latch<ForwardInstData> &latch) {
+    ForwardInstData *inst = latch.getFaultInjectionTarget(cpu.injectLoc);
+    if(inst->isBubble()) {
+        DPRINTF(FI, "inst is bubble; inject a fault once more\n");
+        //If we don't want to inject a fault more, return true
+        return false;
+    } else {
+        unsigned loc = cpu.injectLoc % inst->width();
+        DPRINTF(FI, "inject fault to inst: %d\n", *(inst->insts[loc]));
+        StaticInstPtr staticInst = inst->insts[loc]->staticInst;
+        staticInst->injectFault(cpu.injectLoc);
+        return true;
+    }
+}
+
 
 }

@@ -60,7 +60,9 @@ MinorCPU::MinorCPU(MinorCPUParams *params) :
     checkFaultReg(params->checkFaultReg),    //HwiSoo: 0->No check, 1-> Check
     //ybkim
     injectFaultToFu(params->injectFaultFu),
-    isFaultInjectedToFu(false)
+    isFaultInjectedToFu(false),
+    injectFaultToPR(params->injectFaultPR),
+    isFaultInjectedToPR(false)
 
 {
     //YOHAN

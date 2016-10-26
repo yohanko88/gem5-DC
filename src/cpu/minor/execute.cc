@@ -953,8 +953,21 @@ Execute::commitInst(MinorDynInstPtr inst, bool early_memory_issue,
 
         DPRINTF(MinorExecute, "Committing inst: %s\n", *inst);
 
+        //ybkim
+        if(inst->staticInst->faultInjected) {
+            DPRINTF(FI, "executing fault-injected instruction: %s\n", *inst);
+        }
+
         fault = inst->staticInst->execute(&context,
             inst->traceData);
+
+        /*
+        //ybkim
+        if(inst->staticInst->faultInjected) {
+            inst->staticInst->clearFault();
+            DPRINTF(FI, "clear fault\n");
+        }
+        */
 
         /* Set the predicate for tracing and dump */
         if (inst->traceData)
@@ -1331,6 +1344,12 @@ Execute::commit(ThreadID thread_id, bool only_commit_microops, bool discard,
         if (completed_inst && !(issued_mem_ref && fault == NoFault)) {
             /* Note that this includes discarded insts */
             DPRINTF(MinorExecute, "Completed inst: %s\n", *inst);
+            //
+            //ybkim
+            if(inst->staticInst->faultInjected) {
+                inst->staticInst->clearFault();
+                DPRINTF(FI, "clear fault\n");
+            }
 
             /* Got to the end of a full instruction? */
             ex_info.lastCommitWasEndOfMacroop = inst->isFault() ||

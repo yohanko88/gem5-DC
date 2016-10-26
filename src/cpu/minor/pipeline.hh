@@ -143,6 +143,11 @@ class Pipeline : public Ticked
 
     /** To give the activity recorder to the CPU */
     MinorActivityRecorder *getActivityRecorder() { return &activityRecorder; }
+
+    //ybkim: Fault injection on Pipeline Registers
+    std::string injectStage;
+    bool injectFaultToPR();
+    bool injectFaultToFowardInstData(Latch<ForwardInstData> &latch);
 };
 
 }

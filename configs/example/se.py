@@ -259,6 +259,10 @@ for i in xrange(np):
         system.cpu[i].injectFaultFu = 1;
     if options.checkArch == "FU":
         system.cpu[i].checkFaultFu = 1;
+    #Pipeline Register
+    if options.injectArch == "PipeReg":
+        system.cpu[i].injectFaultPR = 1;
+        system.cpu[i].pipeRegStage = options.pipeRegStage
     #hwisoo
     if options.injectArch == "LSQ":
         system.cpu[i].injectFaultLSQ = 1;

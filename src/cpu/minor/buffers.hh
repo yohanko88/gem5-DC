@@ -54,6 +54,9 @@
 #include "cpu/activity.hh"
 #include "cpu/timebuf.hh"
 
+//ybkim
+#include "debug/FI.hh"
+
 namespace Minor
 {
 
@@ -272,6 +275,15 @@ class Latch
     void minorTrace() const { buffer.minorTrace(); }
 
     void evaluate() { buffer.advance(); }
+
+    //ybkim
+    Data* getFaultInjectionTarget(unsigned injectLoc) {
+        unsigned size = buffer.getSize()-2;
+        unsigned bufferIndex = injectLoc / sizeof(Data);
+        bufferIndex = bufferIndex > size ? size : bufferIndex;
+        Data *inst = buffer.access(bufferIndex);
+        return inst;
+    }
 };
 
 /** A pipeline simulating class that will stall (not advance when advance()
