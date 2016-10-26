@@ -16,7 +16,7 @@ elif(bench == 'matmul'):
 elif(bench == 'stringsearch'):
 	runtime = 162836000
 elif(bench == 'susan'):
-	runtime = 2368994000
+	runtime = 2367365000
 elif(bench == 'gsm'):
 	runtime = 15977939000
 elif(bench == 'jpeg'):

@@ -3,11 +3,11 @@ bench_home="/home/yonsei_dclab/yohan/miBench"
 case "$2" in
 susan )
   bench="automotive/susan/susan_$1"
-  options="$bench_home/automotive/susan/input_small.pgm $2/$6/result_$5 -e"
+  options="$bench_home/automotive/susan/input_small.pgm $2/$6/result_$8 -e"
   ;;
 jpeg )
   bench="consumer/jpeg/jpeg-6a/cjpeg_$1"
-  options="-dct int -progressive -opt -outfile $2/$6/result_$5 $bench_home/consumer/jpeg/input_small.ppm"
+  options="-dct int -progressive -opt -outfile $2/$6/result_$8 $bench_home/consumer/jpeg/input_small.ppm"
 esac
 
 protection=no_protection								# Protection scheme to be used
@@ -20,7 +20,7 @@ config_path=./configs/example/se.py		# Path to config file
 $gemv_exec_path -d $2/$6 -re --stdout-file=simout_$5 --stderr-file=simerr_$5 --debug-file=FI_$5 --stats-file=stats_$5 --debug-flags=FI $config_path --cpu-type=$cpu_type --caches -n $num_procs -c "$bench_home/$bench" -o "$options" --injectArch=$6 --injectTime=$3 --injectLoc=$4 -m $7
 
 
-if cmp -s ./$2/$6/result_$5 golden_output_$2
+if cmp -s ./$2/$6/result_$8 golden_output_$2
 then
 	if cmp -s ./$2/$6/stats_$5 bin.txt
 	then
