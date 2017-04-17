@@ -258,9 +258,18 @@ for i in xrange(np):
         system.cpu[i].injectFaultReg = 1
     if options.checkArch == "Reg":
         system.cpu[i].checkFaultReg = 1
-		
+        
     if options.injectArch == "RegHard":
         system.cpu[i].injectFaultRegHard = 1
+        
+    if options.injectArch == "Branch":
+        system.cpu[i].injectFaultBranch = 1
+
+    if options.injectArch == "Store":
+        system.cpu[i].injectFaultStore = 1
+        
+    if options.injectArch == "Load":
+        system.cpu[i].injectFaultLoad = 1
 
     #ybkim
     if options.injectArch == "FU":
@@ -278,7 +287,7 @@ for i in xrange(np):
     if options.correctLoad:
         system.cpu[i].correctLoad = True
 
-            #hwisoo
+    #hwisoo
     if options.injectArch == "LSQ":
         system.cpu[i].injectFaultLSQ = 1;
     if options.checkArch == "LSQ":

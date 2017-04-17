@@ -148,7 +148,7 @@ def addCommonOptions(parser):
     parser.add_option("--injectLoc", type="int", default="0",
                       help = "Bit location to inject fault")
     parser.add_option("--injectArch", type="choice", default="NO",
-                      choices = ["Reg", "FU", "NO", "PipeReg", "LSQ", "RegHard"],
+                      choices = ["Reg", "FU", "NO", "PipeReg", "LSQ", "RegHard", "Branch", "Store", "Load"],
                       help = """
                       Which architecture do you want to inject fautls?
                       - Default: No injection""")

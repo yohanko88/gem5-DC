@@ -256,12 +256,31 @@ Execute::tryToBranch(MinorDynInstPtr inst, Fault fault, BranchData &branch)
 
     /* The reason for the branch data we're about to generate, set below */
     BranchData::Reason reason = BranchData::NoBranch;
+    
+    if(cpu.injectFaultBranch == 1 && cpu.injectTime <= curTick() && inst->triedToPredict) {
+        if(!must_branch) {
+            target = inst->predictedTarget;
+            cpu.injectFaultBranch = 0;
+            DPRINTF(FI, "Branch is flipped to NotTaken to Taken\t%s\n", my_inst);
+        }
+        
+        if(must_branch && inst->predictedTarget != target) {
+            target = inst->predictedTarget;
+            cpu.injectFaultBranch = 0;
+            DPRINTF(FI, "Branch is flipped to MisTaken to Taken\t%s\n", my_inst);
+        }
+        
+        else if(must_branch) {
+            target = inst->pc.nextInstAddr();
+            cpu.injectFaultBranch = 0;
+            DPRINTF(FI, "Branch is flipped to Taken to NotTaken\t%s\n", my_inst);
+        }
+    }
 
     if (fault == NoFault)
     {
         TheISA::advancePC(target, inst->staticInst);
         thread->pcState(target);
-
         DPRINTF(Branch, "Advancing current PC from: %s to: %s\n",
             pc_before, target);
     }
@@ -274,6 +293,9 @@ Execute::tryToBranch(MinorDynInstPtr inst, Fault fault, BranchData &branch)
             DPRINTF(Branch, "Predicted a branch from 0x%x to 0x%x but"
                 " none happened inst: %s\n",
                 inst->pc.instAddr(), inst->predictedTarget.instAddr(), *inst);
+                
+            //DPRINTF(Branch, "YOHAN: 0x%x\n",
+            //    inst->pc.instAddr(), inst->predictedTarget.instAddr(), *inst);
                 
             DPRINTF(Symptom, "%#x\t%s\tTaken\tNotTaken\tIncorrect\t%d\n", inst->pc.instAddr(), my_inst, inst->id.execSeqNum); //YOHAN
             
@@ -303,6 +325,9 @@ Execute::tryToBranch(MinorDynInstPtr inst, Fault fault, BranchData &branch)
                 " inst: %s\n",
                 inst->pc.instAddr(), inst->predictedTarget.instAddr(), *inst);
                 
+            DPRINTF(Branch, "YOHAN nextInstAddr is 0x%x\n", inst->pc.nextInstAddr());
+            
+                
             DPRINTF(Symptom, "%#x\t%s\tTaken\tTaken\tCorrect\t%d\n", inst->pc.instAddr(), my_inst, inst->id.execSeqNum); //YOHAN
 
             reason = BranchData::CorrectlyPredictedBranch;
@@ -312,7 +337,7 @@ Execute::tryToBranch(MinorDynInstPtr inst, Fault fault, BranchData &branch)
                     " but got the wrong target (actual: 0x%x) inst: %s\n",
                     inst->pc.instAddr(), inst->predictedTarget.instAddr(),
                     target.instAddr(), *inst);
-                    
+                                        
             DPRINTF(Symptom, "%#x\t%s\tTaken\tMisTaken\tIncorrect\t%d\n", inst->pc.instAddr(), my_inst, inst->id.execSeqNum); //YOHAN
             
             if(cpu.injectReadSN != -1 && !cpu.readSymptom[0]) {
@@ -359,8 +384,12 @@ Execute::tryToBranch(MinorDynInstPtr inst, Fault fault, BranchData &branch)
 
         reason = BranchData::UnpredictedBranch;
     } else {
-        if(inst->triedToPredict)
+        if(inst->triedToPredict) {
             DPRINTF(Symptom, "%#x\t%s\tNotTaken\tNotTaken\tCorrect\t%d\n", inst->pc.instAddr(), my_inst, inst->id.execSeqNum); //YOHAN
+            //TheISA::advancePC(inst->predictedTarget, inst->staticInst);
+            //thread->pcState(inst->predictedTarget);
+            //target = inst->predictedTarget;
+        }
         /* No branch at all */
         reason = BranchData::NoBranch;
     }
@@ -621,10 +650,10 @@ Execute::executeMemRefInst(MinorDynInstPtr inst, BranchData &branch,
             *this, inst);
 
         DPRINTF(MinorExecute, "Initiating memRef inst: %s\n", *inst);
-
+         
         Fault init_fault = inst->staticInst->initiateAcc(&context,
-            inst->traceData);
-
+        inst->traceData);
+            
         if (init_fault != NoFault) {
             DPRINTF(MinorExecute, "Fault on memory inst: %s"
                 " initiateAcc: %s\n", *inst, init_fault->name());
@@ -720,7 +749,7 @@ Execute::issue(ThreadID thread_id)
         Fault fault = inst->fault;
         bool discarded = false;
         bool issued_mem_ref = false;
-		
+        
         if (inst->isBubble()) {
             /* Skip */
             issued = true;
@@ -738,7 +767,7 @@ Execute::issue(ThreadID thread_id)
                 *inst, thread.streamSeqNum);
             issued = true;
             discarded = true;
-			DPRINTF(Rollback, "%d\n", inst->id.execSeqNum); //YOHAN
+            DPRINTF(Rollback, "%d: discarded\n", inst->id.execSeqNum); //YOHAN
         } else {
             /* Try and issue an instruction into an FU, assume we didn't and
              * fix that in the loop */
@@ -1112,7 +1141,8 @@ Execute::commitInst(MinorDynInstPtr inst, bool early_memory_issue,
         if(inst->staticInst->isLoad() && cpu.correctLoad)
             correctInst(inst);
          
-        bool predicate_passed = false;
+        bool predicate_passed = false;        
+
         bool completed_mem_inst = executeMemRefInst(inst, branch,
             predicate_passed, fault);
             
@@ -1398,13 +1428,29 @@ Execute::commit(ThreadID thread_id, bool only_commit_microops, bool discard,
 
             DPRINTF(MinorExecute, "Trying to commit mem response: %s\n",
                 *inst);
+				
+			//YOHAN
+			Addr addr = inst->pc.instAddr();
+			std::string my_inst = inst->staticInst->generateDisassembly(addr, debugSymbolTable);
+
+			if(inst->staticInst->isStore() && cpu.injectFaultStore && cpu.injectTime <= curTick() && !discard_inst) {
+				DPRINTF(FI, "%s is not executed\n", my_inst);
+				cpu.injectFaultStore = false;
+				discard_inst = true;
+			}
+			
+			else if(inst->staticInst->isLoad() && cpu.injectFaultLoad && cpu.injectTime <= curTick() && !discard_inst) {
+				DPRINTF(FI, "%s is not executed\n", my_inst);
+				cpu.injectFaultLoad = false;
+				discard_inst = true;
+			}
 
             /* Complete or discard the response */
             if (discard_inst) {
                 DPRINTF(MinorExecute, "Discarding mem inst: %s as its"
                     " stream state was unexpected, expected: %d\n",
                     *inst, ex_info.streamSeqNum);
-				
+                
                 lsq.popResponse(mem_response);
             } else {
                 handleMemResponse(inst, mem_response, branch, fault);
@@ -1612,11 +1658,11 @@ Execute::commit(ThreadID thread_id, bool only_commit_microops, bool discard,
                 ex_info.inFUMemInsts->pop();
             }
         }
-		
+        
         if (completed_inst && !(issued_mem_ref && fault == NoFault)) {
             /* Note that this includes discarded insts */
             DPRINTF(MinorExecute, "Completed inst: %s\n", *inst);
-			DPRINTF(Rollback, "%d\n", inst->id.execSeqNum); //YOHAN
+            DPRINTF(Rollback, "%d: completed: %s: %s\n", inst->id.execSeqNum, inst->staticInst->getName()); //YOHAN
             
             // JONGHO
             if(inst && inst->pc.instAddr() && inst->staticInst) {

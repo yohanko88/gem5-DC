@@ -53,6 +53,9 @@ MinorCPU::MinorCPU(MinorCPUParams *params) :
     threadPolicy(params->threadPolicy),
     injectFaultReg(params->injectFaultReg), //HwiSoo: 0-> No injection, 1-> Fault injection
     injectFaultRegHard(params->injectFaultRegHard), //Yohan: 0-> No injection, 1-> Fault injection
+    injectFaultBranch(params->injectFaultBranch), //Yohan: 0-> No injection, 1-> Fault injection
+    injectFaultStore(params->injectFaultStore), //Yohan: 0-> No injection, 1-> Fault injection
+    injectFaultLoad(params->injectFaultLoad), //Yohan: 0-> No injection, 1-> Fault injection
     injectTime(params->injectTime),         //HwiSoo: Injection time
     injectLoc(params->injectLoc),           //HwiSoo: Injection location
     injectReg(false),

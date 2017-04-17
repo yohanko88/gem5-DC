@@ -119,6 +119,9 @@ class MinorCPU : public BaseCPU
     //HwiSoo, variables for injecting faults
     unsigned injectFaultReg;
     unsigned injectFaultRegHard;
+    unsigned injectFaultBranch;
+    unsigned injectFaultStore;
+    unsigned injectFaultLoad;
     uint64_t injectTime;
     unsigned injectLoc;
     bool injectReg;
