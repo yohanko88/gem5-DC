@@ -1076,7 +1076,7 @@ Execute::commitInst(MinorDynInstPtr inst, bool early_memory_issue,
     
     //YOHAN
     inst->needReExecute = false;
-    if( (cpu.injectRegHard || cpu.injectReg || cpu.injectLSQ) && cpu.injectEarlySN == -1) {
+    if( (cpu.injectReg || cpu.injectRegHard || cpu.injectLSQ || Vulnerable::checkInjectPipeReg()) && cpu.injectEarlySN == -1) {
         cpu.injectEarlySN = inst->id.execSeqNum;
         DPRINTF(FI, "cpu.injectEarlySN is %d\n", cpu.injectEarlySN);
         //DPRINTF(FI, "cpu.injectEarlySN is %d\n", Vulnerable::getRemainingFiSize());

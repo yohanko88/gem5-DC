@@ -46,7 +46,7 @@ class Vulnerable
      *  You should NOT modify or override this method.
      *  We've already prevented it by using the keyword "final"
      */
-    virtual void registerFi(unsigned int time, unsigned int loc, std::function<void(const unsigned int)> method=NULL) final;
+    virtual void registerFi(uint64_t time, unsigned int loc, std::function<void(const unsigned int)> method=NULL) final;
  
     /**
      *  Your own implementation of fault injection into a hardware component
@@ -59,13 +59,13 @@ class Vulnerable
      *  so you just register fault injections with registerFi() and it's done
      */
     virtual void injectFault(const unsigned int loc, std::function<void(unsigned int)> method=NULL) = 0;
-    static int getRemainingFiSize(); //HwiSOo
+    static bool checkInjectPipeReg(); //HwiSoo. initialized in pipeline.cc
     
     class FiInfo {
       public:
         friend class Vulnerable;
-        FiInfo(unsigned int _t, unsigned int _l, Vulnerable *_v, std::function<void(unsigned int)> _m=NULL);
-        unsigned int injTime;
+        FiInfo(uint64_t _t, unsigned int _l, Vulnerable *_v, std::function<void(unsigned int)> _m=NULL);
+        uint64_t injTime;
         unsigned int injLoc;
         Vulnerable *target;
 

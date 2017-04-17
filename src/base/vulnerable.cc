@@ -10,17 +10,18 @@ namespace
 {
     std::vector<Vulnerable::FiInfo> remainingFi;
     unsigned int fi_count = 0;
+    bool injectPipeReg = false;
 } // anonymous namespace
 
 
 /** This method is "final" method */
 void
-Vulnerable::registerFi(unsigned int time, unsigned int loc, std::function<void(const unsigned int)> method)
+Vulnerable::registerFi(uint64_t time, unsigned int loc, std::function<void(const unsigned int)> method)
 {
     Vulnerable::FiInfo& fi_info = *new Vulnerable::FiInfo(time, loc, this, method);
     DPRINTF(FI, "--- Fault-injection Registered ---\n");
     DPRINTF(FI, "     * id:          %u\n", fi_info.id);
-    DPRINTF(FI, "     * time:        %u\n", time);
+    DPRINTF(FI, "     * time:        %lu\n", time);
     DPRINTF(FI, "     * loc:         %u\n", loc);
     DPRINTF(FI, "     * target type: %s\n", typeid(*this).name());
     remainingFi.push_back(fi_info);
@@ -35,7 +36,7 @@ Vulnerable::registerFi(unsigned int time, unsigned int loc, std::function<void(c
  *
  * All information about a fault injection is stored in this constructor
  */
-Vulnerable::FiInfo::FiInfo(unsigned int _time, unsigned int _loc, Vulnerable *_vul, std::function<void(const unsigned int)> _m)
+Vulnerable::FiInfo::FiInfo(uint64_t _time, unsigned int _loc, Vulnerable *_vul, std::function<void(const unsigned int)> _m)
     : injTime(_time), injLoc(_loc), target(_vul), method(_m)
 {
     ++fi_count;
@@ -55,14 +56,17 @@ Vulnerable::evaluate()
         if(iter->injTime < curTick()) {
             iter->target->injectFault(iter->injLoc, iter->method);
             iter = remainingFi.erase(iter);
+            if(remainingFi.size()==0)
+                injectPipeReg=true;
        }
         else
             ++iter;
     }
 }
 
-int
-Vulnerable::getRemainingFiSize() //HwiSoo
+
+bool
+Vulnerable::checkInjectPipeReg()
 {
-    return remainingFi.size();
+    return injectPipeReg;
 }
