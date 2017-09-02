@@ -286,6 +286,8 @@ for i in xrange(np):
         system.cpu[i].correctStore = True
     if options.correctLoad:
         system.cpu[i].correctLoad = True
+    if options.injectMain:
+        system.cpu[i].injectMain = True
 
     #hwisoo
     if options.injectArch == "LSQ":

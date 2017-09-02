@@ -172,7 +172,9 @@ def addCommonOptions(parser):
                       help="Correct store instructions")
     parser.add_option("--correctLoad", action="store_true", default=False,
                       help="Correct load instructions")
-
+    parser.add_option("--injectMain", action="store_true", default=False,
+                      help="Inject faults into only main functions")
+					  
     # dist-gem5 options
     parser.add_option("--dist", action="store_true",
                       help="Parallel distributed gem5 simulation.")

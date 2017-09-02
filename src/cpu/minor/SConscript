@@ -74,7 +74,11 @@ if 'MinorCPU' in env['CPU_MODELS']:
     DebugFlag('Symptom', 'Trace symptoms')              # YOHAN: Symptom event log
     DebugFlag('SymptomFI', 'Trace symptoms after FI')   # YOHAN: Symptom event log
     DebugFlag('Rollback', 'Estimating overhead from re-execution')   # YOHAN: Symptom event log
-
+    DebugFlag('BranchProfile', 'Profiling branch instruction')   # YOHAN: Branch profiling
+    DebugFlag('BranchTrace', 'Profiling branch instruction')   # YOHAN: Branch profiling
+    DebugFlag('RegTrace', 'Profiling register file') #YOHAN
+    DebugFlag('VarVul', 'Variable vulnerability') #YOHAN
+    
     CompoundFlag('Minor', [
         'MinorCPU', 'MinorExecute', 'MinorInterrupt', 'MinorMem',
         'MinorScoreboard', 'ShsTemp'])

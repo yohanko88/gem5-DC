@@ -193,9 +193,9 @@ Decode::evaluate()
                     output_inst->fault = NoFault;
 
                     // JONGHO
-                    assert(static_micro_inst->numSrcRegs() >= 0);
-                    assert(static_micro_inst->numDestRegs() >= 0);
-                    assert(static_micro_inst->numSrcRegs() + static_micro_inst->numDestRegs() > 0);
+                    //assert(static_micro_inst->numSrcRegs() >= 0);
+                    //assert(static_micro_inst->numDestRegs() >= 0);
+                    //assert(static_micro_inst->numSrcRegs() + static_micro_inst->numDestRegs() > 0);
 
                     /* Allow a predicted next address only on the last
                      *  microop */
@@ -204,19 +204,19 @@ Decode::evaluate()
                         output_inst->predictedTarget = inst->predictedTarget;
                     }
                     // JONGHO: More Logging
-                    ExtMachInst bin = output_inst->staticInst->machInst;
+                    //ExtMachInst bin = output_inst->staticInst->machInst;
 
                     // JONGHO: More Logging
-                    DPRINTF(Decode, "Microop decomposition\t%#x inputIndex:"
-                        " %d output_index: %d lastMicroop: %s microopPC:"
-                        " %d.%d inst: %d\n",
-                        bin,
-                        decode_info.inputIndex, output_index,
-                        (static_micro_inst->isLastMicroop() ?
-                            "true" : "false"),
-                        decode_info.microopPC.instAddr(),
-                        decode_info.microopPC.microPC(),
-                        *output_inst);
+                    //DPRINTF(Decode, "Microop decomposition\t%#x inputIndex:"
+                    //    " %d output_index: %d lastMicroop: %s microopPC:"
+                    //    " %d.%d inst: %d\n",
+                        // bin,
+                        // decode_info.inputIndex, output_index,
+                        // (static_micro_inst->isLastMicroop() ?
+                            // "true" : "false"),
+                        // decode_info.microopPC.instAddr(),
+                        // decode_info.microopPC.microPC(),
+                        // *output_inst);
 
                     /* Acknowledge that the static_inst isn't mine, it's my
                      * parent macro-op's */
@@ -238,13 +238,13 @@ Decode::evaluate()
 
                     /* Doesn't need decomposing, pass on instruction */
                     // JONGHO: More Logging
-                    ExtMachInst bin = output_inst->staticInst->machInst;
+                    //ExtMachInst bin = output_inst->staticInst->machInst;
 
                     // JONGHO: More Logging
-                    DPRINTF(Decode, "Passing on inst\t%#x: %s inputIndex:"
-                        " %d output_index: %d\n",
-                        bin,
-                        *output_inst, decode_info.inputIndex, output_index);
+                    // DPRINTF(Decode, "Passing on inst\t%#x: %s inputIndex:"
+                        // " %d output_index: %d\n",
+                        // bin,
+                        // *output_inst, decode_info.inputIndex, output_index);
 
                     parent_static_inst = static_inst;
 

@@ -285,12 +285,12 @@ class Latch : public Vulnerable
     /** Data must implement VulnerableData interface */
     void injectFault(const unsigned int loc, std::function<void(const unsigned int)> method) override
     {
-        DPRINTF(FICallTrace, "injectFault() @Latch\n");
-        Data& vul_data = *output().outputWire;
-        if(!method)
-            vul_data.corrupt(loc);
-        else
-            method(loc);
+        //DPRINTF(FICallTrace, "injectFault() @Latch\n");
+        //Data& vul_data = *output().outputWire;
+        //if(!method)
+        //    vul_data.corrupt(loc);
+        //else
+        //    method(loc);
     }
 };
 

@@ -46,7 +46,8 @@
 #include "debug/MinorCPU.hh"
 #include "debug/Quiesce.hh"
 #include "debug/ShsTemp.hh"
-#include "debug/FI.hh"
+#include "debug/FI.hh" //YOHAN
+#include "debug/BranchProfile.hh" //YOHAN
 
 MinorCPU::MinorCPU(MinorCPUParams *params) :
     BaseCPU(params),
@@ -81,6 +82,13 @@ MinorCPU::MinorCPU(MinorCPUParams *params) :
     
     /* This is only written for one thread at the moment */
     Minor::MinorThread *thread;
+	
+    for (int i=0 ; i<16; i++) {
+		regVulLast[i] = 0;
+		regVulTemp[i] = 0;
+		regVulTime[i] = 0;
+	}
+
 
     for (ThreadID i = 0; i < numThreads; i++) {
         if (FullSystem) {
@@ -156,6 +164,11 @@ MinorCPU::regStats()
     BaseCPU::regStats();
     stats.regStats(name(), *this);
     pipeline->regStats();
+	
+    numMainCycles
+        .name(name() + ".numMainCycles")
+        .desc("number of cpu cycles simulated in user functions")
+        ;
 }
 
 void
@@ -432,6 +445,7 @@ void
 MinorCPU::exitCallback()
 {
     std::map<int, uint64_t>::iterator itMap;
+    std::map<Addr, uint64_t>::iterator branchMap;
     
     if(traceReg && injectReg)
         DPRINTF(FI, "Corrupted reg %d is unused\n", injectLoc/32);
@@ -443,4 +457,11 @@ MinorCPU::exitCallback()
     for(itMap = RCDAP.begin(); itMap != RCDAP.end(); itMap++) {
         DPRINTF(FI, "Reg %d is faulty\n", itMap->first);
     }
+	
+	for(branchMap = numBranch.begin(); branchMap != numBranch.end(); branchMap++) {
+		DPRINTF(BranchProfile, "%#x\t%s\t%s\t%d\n", branchMap->first, funcBranch[branchMap->first], typeBranch[branchMap->first], branchMap->second);
+	}
+	
+    if(injectFaultBranch == 1)
+        DPRINTF(FI, "Not working\n");
 }

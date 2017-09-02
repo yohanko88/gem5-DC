@@ -213,6 +213,7 @@ class BaseCPU(MemObject):
     traceMask = Param.Bool(False, "Trace masking effect")
     correctStore = Param.Bool(False, "Correct store instructions")
     correctLoad = Param.Bool(False, "Correct load instructions")
+    injectMain = Param.Bool(False, "Inject faults into main functions")
 
     icache_port = MasterPort("Instruction Port")
     dcache_port = MasterPort("Data Port")

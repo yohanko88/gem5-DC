@@ -139,10 +139,37 @@ BaseCPU::BaseCPU(Params *p, bool is_checker)
       traceMask(p->traceMask), //YOHAN
       correctStore (p->correctStore), //YOHAN
       correctLoad (p->correctLoad), //YOHAN
+      injectMain (p->injectMain), //YOHAN
       injectReadSN (-1), //YOHAN
       injectEarlySN (-1), //YOHAN
+      targetNumBranch (0), //YOHAN
       regHardIdx (-1) //YOHAN
 {
+    main_func.insert("getint");
+    main_func.insert("get_image");
+    main_func.insert("put_image");
+    main_func.insert("int_to_uchar");
+    main_func.insert("setup_brightness_lut");
+    main_func.insert("susan_principle");
+    main_func.insert("susan_principle_small");
+    main_func.insert("median");
+    main_func.insert("enlarge");
+    main_func.insert("susan_smoothing");
+    main_func.insert("edge_draw");
+    main_func.insert("susan_thin");
+    main_func.insert("susan_edges");
+    main_func.insert("susan_edges_small");
+    main_func.insert("corner_draw");
+    main_func.insert("susan_corners");
+    main_func.insert("susan_corners_quick");
+    main_func.insert("IsPowerOfTwo");
+    main_func.insert("NumberOfBitsNeeded");
+    main_func.insert("ReverseBits");
+    main_func.insert("Index_to_frequency");
+    main_func.insert("CheckPointer.part.0");
+    main_func.insert("fft_float");
+    main_func.insert("main");
+    
     // if Python did not provide a valid ID, do it here
     if (_cpuId == -1 ) {
         _cpuId = cpuList.size();
@@ -825,4 +852,49 @@ BaseCPU::inRCDAP(int reg_idx)
     }
     
     return false;
+}
+
+//YOHAN: addr in numBranch?
+bool
+BaseCPU::inNumBranch(Addr addr)
+{
+    std::map<Addr, uint64_t>::iterator branchMap;
+    
+    for(branchMap = numBranch.begin(); branchMap != numBranch.end(); branchMap++) {
+        if(addr == branchMap->first) {
+            return true;
+        }
+    }
+    
+    return false;
+}
+
+//YOHAN: addr in varVulTime?
+bool
+BaseCPU::inVarVul(Addr addr)
+{
+    std::map<Addr, uint64_t>::iterator varVulMap;
+    
+    for(varVulMap = varVulTime.begin(); varVulMap != varVulTime.end(); varVulMap++) {
+        if(addr == varVulMap->first) {
+            return true;
+        }
+    }
+    
+    return false;
+}
+
+//YOHAN: addr in varVulTime?
+Addr
+BaseCPU::inVarVulTemp(uint64_t regIdx)
+{
+    std::map<Addr, int>::iterator iterVulTemp;
+    
+    for(iterVulTemp = varVulTemp.begin(); iterVulTemp != varVulTemp.end(); iterVulTemp++) {
+        if(regIdx == iterVulTemp->second) {
+            return iterVulTemp->first;
+        }
+    }
+    
+    return 0;
 }

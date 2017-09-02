@@ -139,7 +139,7 @@ class ExecContext : public ::ExecContext
                 DPRINTF(FI, "cpu.injectReadSN is %d\n", cpu.injectReadSN);
             }
             cpu.instRead = true;
-            cpu.readId = inst->staticInst->machInst;
+            //cpu.readId = inst->staticInst->machInst;
             flipped_data = thread.readIntReg(si->srcRegIdx(idx));
             if(curTick() >= cpu.correctTime && cpu.correctRf) {
                 thread.setIntReg2(si->srcRegIdx(idx), cpu.originalRegData);
@@ -178,12 +178,12 @@ class ExecContext : public ::ExecContext
     setIntRegOperand(const StaticInst *si, int idx, IntReg val) override
     {
         //YOHAN: Behaviors of corrupted register
-        if(cpu.traceReg && (cpu.injectLoc/32) == si->destRegIdx(idx) && cpu.readId != inst->staticInst->machInst) {
+        if(cpu.traceReg && (cpu.injectLoc/32) == si->destRegIdx(idx)) { //&& cpu.readId != inst->staticInst->machInst) {
             DPRINTF(FI, "Corrupted reg %d is overwritten by %s\n", si->destRegIdx(idx), si->getName());
             cpu.traceReg = false;
         }
         
-        else if(cpu.traceReg && (cpu.injectLoc/32) == si->destRegIdx(idx) && cpu.readId == inst->staticInst->machInst) {
+        else if(cpu.traceReg && (cpu.injectLoc/32) == si->destRegIdx(idx)){ //&& cpu.readId == inst->staticInst->machInst) {
             DPRINTF(FI, "Corrupted reg %d is updated by %s\n", si->destRegIdx(idx), si->getName());
             cpu.traceReg = false;
         }

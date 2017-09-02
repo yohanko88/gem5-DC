@@ -213,6 +213,8 @@ Fetch2::predictBranch(MinorDynInstPtr inst, BranchData &branch)
             inst->predictedTarget = inst_pc;
             branch.target = inst_pc;
         }
+		else //YOHAN
+			inst->predictedTarget = inst_pc;
     } else {
         DPRINTF(Branch, "Not attempting prediction for inst: %s\n", *inst);
     }

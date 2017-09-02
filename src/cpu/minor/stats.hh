@@ -78,6 +78,9 @@ class MinorStats
 
     /** Number of instructions by type (OpClass) */
     Stats::Vector2d committedInstType;
+    
+    //YOHAN: Number of commited branch instructions
+    Stats::Scalar numBranchInsts;
 
   public:
     MinorStats();

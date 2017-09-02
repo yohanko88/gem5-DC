@@ -66,7 +66,7 @@ namespace Minor
 /** Forward data betwen Execute and Fetch1 carrying change-of-address/stream
  *  information. */
 // JONGHO
-class BranchData: public VulnerableData /* : public ReportIF, public BubbleIF */
+class BranchData//: public VulnerableData /* : public ReportIF, public BubbleIF */
 {
   public:
     enum Reason
@@ -169,7 +169,7 @@ class BranchData: public VulnerableData /* : public ReportIF, public BubbleIF */
      *
      * @loc: Index of a bit flipped by fault injection
      */
-    void corrupt(const unsigned int loc) override;
+    //void corrupt(const unsigned int loc) override;
 };
 
 /** Print a branch reason enum */
@@ -184,7 +184,7 @@ std::ostream &operator <<(std::ostream &os, const BranchData &branch);
  *  that line was fetched and a bubbleFlag that can allow ForwardLineData to
  *  be used to represent the absence of line data in a pipeline. */
 // JONGHO: See base/vulnerable.hh
-class ForwardLineData : public VulnerableData /* : public ReportIF, public BubbleIF */
+class ForwardLineData// : public VulnerableData /* : public ReportIF, public BubbleIF */
 {
   private:
     /** This line is a bubble.  No other data member is required to be valid
@@ -265,7 +265,7 @@ class ForwardLineData : public VulnerableData /* : public ReportIF, public Bubbl
      *
      * @loc: Index of a bit flipped by fault injection
      */
-    void corrupt(const unsigned int loc) override;
+    //void corrupt(const unsigned int loc) override;
 };
 
 /** Maximum number of instructions that can be carried by the pipeline. */
@@ -275,7 +275,7 @@ const unsigned int MAX_FORWARD_INSTS = 16;
  *  instructions of a width appropriate to the configured stage widths.
  *  Also carries exception information where instructions are not valid */
 // JONGHO: See base/vulnerable.hh
-class ForwardInstData : public VulnerableData /* : public ReportIF, public BubbleIF */
+class ForwardInstData //: public VulnerableData /* : public ReportIF, public BubbleIF */
 {
   public:
     /** Array of carried insts, ref counted */
@@ -325,7 +325,7 @@ class ForwardInstData : public VulnerableData /* : public ReportIF, public Bubbl
      * This method inject fault into a single ARM instruction before decoded,
      * which is in f2ToD.
      */
-    void corrupt(const unsigned int loc) override;
+    //void corrupt(const unsigned int loc) override;
 
     /* 
      * Target HW component: Pipeline Register [F->D]

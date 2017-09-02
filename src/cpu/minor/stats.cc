@@ -88,6 +88,11 @@ MinorStats::regStats(const std::string &name, BaseCPU &baseCpu)
         .name(name + ".op_class")
         .desc("Class of committed instruction")
         .flags(Stats::total | Stats::pdf | Stats::dist);
+
+    numBranchInsts
+        .name(name + ".committedBranchInsts")
+        .desc("Number of branch instructions committed");
+        
     committedInstType.ysubnames(Enums::OpClassStrings);
 }
 

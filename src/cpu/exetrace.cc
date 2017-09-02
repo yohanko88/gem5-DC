@@ -95,6 +95,9 @@ Trace::ExeTracerRecord::traceInst(const StaticInstPtr &inst, bool ran)
     } else {
         outs << "   ";
     }
+    
+    //YOHAN
+    //outs << "0x" << hex << cur_pc;
 
     outs << " : ";
 

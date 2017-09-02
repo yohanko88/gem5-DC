@@ -594,9 +594,26 @@ class BaseCPU : public MemObject
     bool inRCDAP(int reg_idx);
     bool correctStore; //YOHAN: correct store instructions
     bool correctLoad; //YOHAN: correct load insructions
+    bool injectMain; //YOHAN: Inject into main functions
     int injectReadSN; //YOHAN: Sequnce number of instruction which is corrupted
     int injectEarlySN; //YOHAN: Sequnce number of instruction which is corrupted
-
+    uint64_t targetNumBranch; //YOHAN: targetNumBranch
+    
+    std::map<Addr, uint64_t> varVulTime; //YOHAN: Variable vulnerability
+    std::map<Addr, uint64_t> varVulTime2; //YOHAN: Variable vulnerability
+    std::map<Addr, uint64_t> varVulLast; //YOHAN: Variable vulnerability last
+    std::map<Addr, int> varVulTemp; //YOHAN: Variable vulnerability temp
+    std::map<Addr, uint64_t> varVulLast2; //YOHAN: Variable vulnerability temp
+    bool inVarVul (Addr addr);
+    Addr inVarVulTemp (uint64_t regIdx);
+    
+    std::map<Addr, uint64_t> numBranch; //YOHAN: Number of dynamic branches
+    std::map<Addr, std::string> typeBranch; //YOHAN: Type of dynamic branches
+    std::map<Addr, std::string> funcBranch; //YOHAN: Function of dynamic branches
+    bool inNumBranch (Addr addr);
+    
+    std::set<std::string> main_func;
+    
     bool readSymptom[NumOfSymptom]; //YOHAN: Symptom is detected
     bool earlySymptom[NumOfSymptom]; //YOHAN: Symptom is detected. HwiSoo: [0] = Branch misprediction, [1] = Exception
     

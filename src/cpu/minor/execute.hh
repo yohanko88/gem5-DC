@@ -370,6 +370,7 @@ class Execute : public Named
     bool injReady() const;
     
     //YOHAN
+    void flipControl(MinorDynInstPtr inst);
     void preExecute(MinorDynInstPtr inst);
     void validateExecute(MinorDynInstPtr inst);
     void correctInst(MinorDynInstPtr inst);

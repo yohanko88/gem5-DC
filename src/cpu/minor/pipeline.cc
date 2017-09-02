@@ -56,6 +56,7 @@
 #include "debug/PipeRegBubble.hh"
 #include "debug/ForwardInstData.hh"
 #include "debug/VfpTrace.hh"
+#include "debug/FI.hh" //YOHAN
 
 namespace Minor
 {
@@ -136,25 +137,25 @@ Pipeline::Pipeline(MinorCPU &cpu_, MinorCPUParams &params) :
     DPRINTF(ForwardInstData, "Instruction Width: %u\n", params.decodeInputWidth);
 
     // JONGHO: Register fault injection
-    if(params.injectComp == "f1ToF2") {
-        f1ToF2.registerFi(params.injectTime, params.injectLoc);
-    }
-    else if(params.injectComp == "f2ToD") {
+    //if(params.injectComp == "f1ToF2") {
+    //    f1ToF2.registerFi(params.injectTime, params.injectLoc);
+    //}
+    //else if(params.injectComp == "f2ToD") {
         /* Data Corruption Method */
-        std::function<void(const unsigned int)> method = std::bind(&ForwardInstData::corruptInst, f2ToD.output().outputWire, std::placeholders::_1);
-        f2ToD.registerFi(params.injectTime, params.injectLoc, method);
-    }
-    else if(params.injectComp == "dToE") {
+   //     std::function<void(const unsigned int)> method = std::bind(&ForwardInstData::corruptInst, f2ToD.output().outputWire, std::placeholders::_1);
+    //    f2ToD.registerFi(params.injectTime, params.injectLoc, method);
+    //}
+    //else if(params.injectComp == "dToE") {
         /* Data Corruption Method */
-        std::function<void(const unsigned int)> method = std::bind(&ForwardInstData::corruptOp, dToE.output().outputWire, std::placeholders::_1);
-        dToE.registerFi(params.injectTime, params.injectLoc, method);
-    }
-    else if(params.injectComp == "eToF1") {
-        eToF1.registerFi(params.injectTime, params.injectLoc);
-    }
-    else if(params.injectComp == "f2ToF1") {
-        f2ToF1.registerFi(params.injectTime, params.injectLoc);
-    }
+    //    std::function<void(const unsigned int)> method = std::bind(&ForwardInstData::z, dToE.output().outputWire, std::placeholders::_1);
+     //   dToE.registerFi(params.injectTime, params.injectLoc, method);
+    //}
+    //else if(params.injectComp == "eToF1") {
+    //    eToF1.registerFi(params.injectTime, params.injectLoc);
+    //}
+    //else if(params.injectComp == "f2ToF1") {
+    //    f2ToF1.registerFi(params.injectTime, params.injectLoc);
+    //}
 }
 
 // JONGHO
@@ -678,7 +679,7 @@ Pipeline::evaluate()
     Vulnerable::evaluate();
 
 	//YOHAN: Inject fault into register file
-    cpu.injectFaultRegFunc();
+    //cpu.injectFaultRegFunc();
 	
 	//YOHAN: Inject fault (hard error) into register file
     cpu.injectFaultRegFuncHard();
@@ -772,7 +773,7 @@ Pipeline::evaluate()
 
     /* Check assertions about instruction */
     StaticInstPtr static_inst_ptr = eToF1_output.inst->staticInst;
-
+	
     if(static_inst_ptr) {
         /*
          * There is NO instruction which is syscall and control flow.

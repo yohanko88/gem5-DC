@@ -95,7 +95,8 @@ class MinorCPU : public BaseCPU
      *  threads[threadId]->getTC() */
     std::vector<Minor::MinorThread *> threads;
 
-  
+	//YOHAN
+	Stats::Scalar numMainCycles;
 
   public:
     /** Provide a non-protected base class for Minor's Ports as derived
@@ -140,6 +141,9 @@ class MinorCPU : public BaseCPU
     //YOHAN
     uint64_t correctTime;
     bool correctRf;
+	uint64_t regVulTime[16];
+	uint64_t regVulLast[16];
+	uint64_t regVulTemp[16];
 
     //HwiSoo
     unsigned injectFaultLSQ;

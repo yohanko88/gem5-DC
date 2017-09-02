@@ -59,6 +59,9 @@
 #include "debug/SymptomFI.hh" //YOHAN
 #include "debug/Symptom.hh" //YOHAN
 #include "debug/Rollback.hh" //YOHAN
+#include "debug/BranchTrace.hh" //YOHAN
+#include "debug/RegTrace.hh" //YOHAN
+#include "debug/VarVul.hh" //YOHAN
 
 // JONGHO
 #include "debug/Completion.hh"
@@ -237,6 +240,9 @@ Execute::tryToBranch(MinorDynInstPtr inst, Fault fault, BranchData &branch)
     //YOHAN
     Addr addr = inst->pc.instAddr();
     std::string my_inst = inst->staticInst->generateDisassembly(addr, debugSymbolTable);
+    std::string sym_str;
+    Addr sym_addr;
+    debugSymbolTable->findNearestSymbol(addr, sym_str, sym_addr);
 
     /* Force a branch for SerializeAfter instructions at the end of micro-op
      *  sequence when we're not suspended */
@@ -255,27 +261,7 @@ Execute::tryToBranch(MinorDynInstPtr inst, Fault fault, BranchData &branch)
         force_branch;
 
     /* The reason for the branch data we're about to generate, set below */
-    BranchData::Reason reason = BranchData::NoBranch;
-    
-    if(cpu.injectFaultBranch == 1 && cpu.injectTime <= curTick() && inst->triedToPredict) {
-        if(!must_branch) {
-            target = inst->predictedTarget;
-            cpu.injectFaultBranch = 0;
-            DPRINTF(FI, "Branch is flipped to NotTaken to Taken\t%s\n", my_inst);
-        }
-        
-        if(must_branch && inst->predictedTarget != target) {
-            target = inst->predictedTarget;
-            cpu.injectFaultBranch = 0;
-            DPRINTF(FI, "Branch is flipped to MisTaken to Taken\t%s\n", my_inst);
-        }
-        
-        else if(must_branch) {
-            target = inst->pc.nextInstAddr();
-            cpu.injectFaultBranch = 0;
-            DPRINTF(FI, "Branch is flipped to Taken to NotTaken\t%s\n", my_inst);
-        }
-    }
+    BranchData::Reason reason = BranchData::NoBranch;   
 
     if (fault == NoFault)
     {
@@ -284,6 +270,37 @@ Execute::tryToBranch(MinorDynInstPtr inst, Fault fault, BranchData &branch)
         DPRINTF(Branch, "Advancing current PC from: %s to: %s\n",
             pc_before, target);
     }
+
+    /*if(cpu.injectFaultBranch == 1 && cpu.injectTime <= curTick() && cpu.injectLoc == inst->pc.instAddr()){ // && inst->triedToPredict) {
+        DPRINTF(FI, "YOHAN\n");
+        if(!must_branch){// && inst->predictedTaken) {
+            DPRINTF(FI, "Target address is changed from %#x to %#x\n", target, inst->predictedTarget);
+            target = inst->predictedTarget;
+            cpu.injectFaultBranch = 0;
+            must_branch = true;
+            DPRINTF(FI, "Branch is flipped from NotTaken\tTaken\t%s\t%s\n", my_inst, sym_str);
+        }
+
+        else {
+            if(inst->predictedTarget == target) {
+                target = inst->pc.nextInstAddr();
+                cpu.injectFaultBranch = 0;
+                must_branch = false;
+                DPRINTF(FI, "Branch is flipped from Taken\tNotTaken\t%s\t%s\n", my_inst, sym_str);
+            }
+
+            else {
+                if(inst->predictedTaken) {
+                    //DPRINTF(FI, "Target address is changed from %#x to %#x %d\n", target, inst->predictedTarget.instAddr(), inst->predictedTaken);
+                    target = inst->predictedTarget;
+                    cpu.injectFaultBranch = 0;
+                    DPRINTF(FI, "Branch is flipped from MisTaken to Taken\t%s\n", my_inst);
+                }
+            }
+        }
+    } */
+
+    //DPRINTF(FI, "inst->predictedTarget: %#x, target: %#x\n", inst->predictedTarget, target);
 
     if (inst->predictedTaken && !force_branch) {
         /* Predicted to branch */
@@ -325,7 +342,7 @@ Execute::tryToBranch(MinorDynInstPtr inst, Fault fault, BranchData &branch)
                 " inst: %s\n",
                 inst->pc.instAddr(), inst->predictedTarget.instAddr(), *inst);
                 
-            DPRINTF(Branch, "YOHAN nextInstAddr is 0x%x\n", inst->pc.nextInstAddr());
+            //DPRINTF(FI, "YOHAN nextInstAddr is 0x%x\n", inst->pc.nextInstAddr());
             
                 
             DPRINTF(Symptom, "%#x\t%s\tTaken\tTaken\tCorrect\t%d\n", inst->pc.instAddr(), my_inst, inst->id.execSeqNum); //YOHAN
@@ -337,7 +354,6 @@ Execute::tryToBranch(MinorDynInstPtr inst, Fault fault, BranchData &branch)
                     " but got the wrong target (actual: 0x%x) inst: %s\n",
                     inst->pc.instAddr(), inst->predictedTarget.instAddr(),
                     target.instAddr(), *inst);
-                                        
             DPRINTF(Symptom, "%#x\t%s\tTaken\tMisTaken\tIncorrect\t%d\n", inst->pc.instAddr(), my_inst, inst->id.execSeqNum); //YOHAN
             
             if(cpu.injectReadSN != -1 && !cpu.readSymptom[0]) {
@@ -501,6 +517,8 @@ Execute::handleMemResponse(MinorDynInstPtr inst,
 
         DPRINTF(MinorMem, "Memory response inst: %s addr: 0x%x size: %d\n",
             *inst, packet->getAddr(), packet->getSize());
+        
+        //inst->memAddr = packet->getAddr();
 
         if (is_load && packet->getSize() > 0) {
             DPRINTF(MinorMem, "Memory data[0]: 0x%x\n",
@@ -510,6 +528,10 @@ Execute::handleMemResponse(MinorDynInstPtr inst,
         /* Complete the memory access instruction */
         fault = inst->staticInst->completeAcc(packet, &context,
             inst->traceData);
+            
+        //DPRINTF(FI, "getPaddr is %#x\n", packet->req->getPaddr());
+        //DPRINTF(FI, "getVaddr is %#x\n", packet->req->getVaddr());
+        inst->memAddr = packet->req->getVaddr();
 
         if (fault != NoFault) {
             /* Invoke fault created by instruction completion */
@@ -687,6 +709,8 @@ Execute::executeMemRefInst(MinorDynInstPtr inst, BranchData &branch,
         thread->pcState(old_pc);
         issued = true;
     }
+    
+    inst->origPred = passed_predicate;
 
     return issued;
 }
@@ -1055,6 +1079,13 @@ Execute::doInstCommitAccounting(MinorDynInstPtr inst)
     cpu.stats.numOps++;
     cpu.stats.committedInstType[inst->id.threadId]
                                [inst->staticInst->opClass()]++;
+                               
+    //YOHAN: Count the number of branch instructions
+    if(inst->staticInst->isControl() || inst->staticInst->isSyscall())
+        cpu.stats.numBranchInsts++;
+    
+    if(cpu.injectLoc == inst->pc.instAddr())
+        cpu.targetNumBranch++;
 
     /* Set the CP SeqNum to the numOps commit number */
     if (inst->traceData)
@@ -1073,6 +1104,22 @@ Execute::commitInst(MinorDynInstPtr inst, bool early_memory_issue,
 
     bool completed_inst = true;
     fault = NoFault;
+    
+    //YOHAN: Inject fault into register file
+    Addr addr = inst->pc.instAddr();
+    std::string my_inst = inst->staticInst->generateDisassembly(addr, debugSymbolTable);
+    std::string sym_str;
+    Addr sym_addr;
+    debugSymbolTable->findNearestSymbol(addr, sym_str, sym_addr);
+    std::set<std::string>::iterator iter;
+    
+    iter = cpu.main_func.find(sym_str);
+    
+    if(cpu.injectMain && iter != cpu.main_func.end())
+        cpu.injectFaultRegFunc();
+    
+    else if (!cpu.injectMain)
+        cpu.injectFaultRegFunc();
     
     //YOHAN
     inst->needReExecute = false;
@@ -1145,6 +1192,8 @@ Execute::commitInst(MinorDynInstPtr inst, bool early_memory_issue,
 
         bool completed_mem_inst = executeMemRefInst(inst, branch,
             predicate_passed, fault);
+
+        //ExecContext context(cpu, *cpu.threads[thread_id], *this, inst);
             
         if (completed_mem_inst && fault != NoFault) {
             if (early_memory_issue) {
@@ -1242,6 +1291,27 @@ Execute::commitInst(MinorDynInstPtr inst, bool early_memory_issue,
         
         fault = inst->staticInst->execute(&context,
             inst->traceData);
+        inst->origPred = context.readPredicate();
+            
+        //YOHAN
+        Addr addr = inst->pc.instAddr();
+        std::string my_inst = inst->staticInst->generateDisassembly(addr, debugSymbolTable);
+        std::string sym_str;
+        Addr sym_addr;
+        debugSymbolTable->findNearestSymbol(addr, sym_str, sym_addr);
+        
+        if(inst->staticInst->isControl() || inst->staticInst->isSyscall()) {
+            if(inst->origPred)
+                DPRINTF(BranchTrace, "%#x\tTaken\t%s\t%s\n", inst->pc.instAddr(), my_inst, sym_str);
+            else
+                DPRINTF(BranchTrace, "%#x\tNotTaken\t%s\t%s\n", inst->pc.instAddr(), my_inst, sym_str);
+        }
+        
+        //Flip
+        //if(cpu.injectFaultBranch == 1 && cpu.injectTime <= curTick() && cpu.injectLoc == inst->pc.instAddr()){
+        if(cpu.injectFaultBranch == 1 && cpu.injectTime == cpu.targetNumBranch && cpu.injectLoc == inst->pc.instAddr()){
+            flipControl(inst);
+        }
 
         //YOHAN
         if(cpu.traceMask) {
@@ -1428,22 +1498,22 @@ Execute::commit(ThreadID thread_id, bool only_commit_microops, bool discard,
 
             DPRINTF(MinorExecute, "Trying to commit mem response: %s\n",
                 *inst);
-				
-			//YOHAN
-			Addr addr = inst->pc.instAddr();
-			std::string my_inst = inst->staticInst->generateDisassembly(addr, debugSymbolTable);
+                
+            //YOHAN
+            Addr addr = inst->pc.instAddr();
+            std::string my_inst = inst->staticInst->generateDisassembly(addr, debugSymbolTable);
 
-			if(inst->staticInst->isStore() && cpu.injectFaultStore && cpu.injectTime <= curTick() && !discard_inst) {
-				DPRINTF(FI, "%s is not executed\n", my_inst);
-				cpu.injectFaultStore = false;
-				discard_inst = true;
-			}
-			
-			else if(inst->staticInst->isLoad() && cpu.injectFaultLoad && cpu.injectTime <= curTick() && !discard_inst) {
-				DPRINTF(FI, "%s is not executed\n", my_inst);
-				cpu.injectFaultLoad = false;
-				discard_inst = true;
-			}
+            if(inst->staticInst->isStore() && cpu.injectFaultStore && cpu.injectTime <= curTick() && !discard_inst) {
+                DPRINTF(FI, "%s is not executed\n", my_inst);
+                cpu.injectFaultStore = false;
+                discard_inst = true;
+            }
+            
+            else if(inst->staticInst->isLoad() && cpu.injectFaultLoad && cpu.injectTime <= curTick() && !discard_inst) {
+                DPRINTF(FI, "%s is not executed\n", my_inst);
+                cpu.injectFaultLoad = false;
+                discard_inst = true;
+            }
 
             /* Complete or discard the response */
             if (discard_inst) {
@@ -1717,6 +1787,171 @@ Execute::commit(ThreadID thread_id, bool only_commit_microops, bool discard,
                 if (setTraceTimeOnCommit)
                     inst->traceData->setWhen(curTick());
                 inst->traceData->dump();
+            }
+
+            //YOHAN
+            for(int i=0; i<16; i++) {
+                Addr addr = inst->pc.instAddr();                
+                std::string sym_str;
+                Addr sym_addr;
+                debugSymbolTable->findNearestSymbol(addr, sym_str, sym_addr);
+                DPRINTF(RegTrace, "%s\tr%d\t%#x\n", sym_str, i, cpu.threads[0]->readIntReg(i));
+            }
+            
+            
+            if(inst->origPred) {
+                /* for(int i = 0; i < inst->staticInst->numSrcRegs(); i++) {
+                    if( inst->staticInst->srcRegIdx(i) < 16) {
+                        cpu.regVulTemp[inst->staticInst->srcRegIdx(i)] += curTick() - cpu.regVulLast[inst->staticInst->srcRegIdx(i)];
+                        cpu.regVulLast[inst->staticInst->srcRegIdx(i)] = curTick();
+                        if(cpu.regVulTemp[inst->staticInst->srcRegIdx(i)] >= cpu.regVulTime[inst->staticInst->srcRegIdx(i)]) {
+                            cpu.regVulTime[inst->staticInst->srcRegIdx(i)] = cpu.regVulTemp[inst->staticInst->srcRegIdx(i)];
+                        }
+                        DPRINTF(FI, "r%d\t%d\n", inst->staticInst->srcRegIdx(i), cpu.regVulTime[inst->staticInst->srcRegIdx(i)]);
+                    }
+                }
+                
+                for(int i = 0; i < inst->staticInst->numDestRegs(); i++) {
+                    if( inst->staticInst->destRegIdx(i) < 16) {
+                        bool nofound = true;                        
+                        cpu.regVulLast[inst->staticInst->destRegIdx(i)] = curTick();
+                        DPRINTF(FI, "%d is dest\n", inst->staticInst->destRegIdx(i));
+                        
+                        for(int j = 0; j < inst->staticInst->numSrcRegs(); j++) {
+                            if( inst->staticInst->srcRegIdx(j) == inst->staticInst->destRegIdx(i)) {
+                                DPRINTF(FI, "r%d\tstill\n", inst->staticInst->destRegIdx(i));
+                                nofound = false;
+                                break;
+                            }
+                        }
+
+                        if(nofound) {
+                            cpu.regVulTemp[inst->staticInst->destRegIdx(i)] = 0;
+                            DPRINTF(FI, "r%d\trenew\n", inst->staticInst->destRegIdx(i));
+                        }
+                        //DPRINTF(FI, "r%d\t%d\n", inst->staticInst->destRegIdx(i), cpu.regVulLast[inst->staticInst->destRegIdx(i)]);
+                    }                    
+                } */
+				Addr addr = inst->pc.instAddr();
+				std::string sym_str;
+                Addr sym_addr;
+                debugSymbolTable->findNearestSymbol(addr, sym_str, sym_addr);
+                
+                bool condInst = false;
+                
+                for(int i = 0; i < inst->staticInst->numSrcRegs(); i++) {
+                    if(condInst && i == inst->staticInst->numSrcRegs()-1)
+                        break;
+                    
+                    //DPRINTF(FI, "SRC %d is %d\n", i, inst->staticInst->srcRegIdx(i));
+                    //if(isFlag(inst->staticInst->srcRegIdx(i)))
+                    //    break;
+                
+                    if(isFlag(inst->staticInst->srcRegIdx(i)))
+                        condInst = true;
+                
+                    if( inst->staticInst->srcRegIdx(i) < 16) {
+                        //DPRINTF(FI, "SRC %d is %d\n", i, inst->staticInst->srcRegIdx(i));
+                        //if (inst->staticInst->isLoad() && i == 5)
+                        //    break;
+                        
+                        if(cpu.inVarVulTemp(inst->staticInst->srcRegIdx(i)) != 0) {
+                            cpu.varVulTime2[cpu.inVarVulTemp(inst->staticInst->srcRegIdx(i))] += curTick() - cpu.varVulLast2[cpu.inVarVulTemp(inst->staticInst->srcRegIdx(i))];
+                            cpu.varVulLast2[cpu.inVarVulTemp(inst->staticInst->srcRegIdx(i))] = curTick();
+                            DPRINTF(VarVul, "VarVulRead\t%#x\tr%d\t%#x\t%d\t%s\n", cpu.inVarVulTemp(inst->staticInst->srcRegIdx(i)), inst->staticInst->srcRegIdx(i), cpu.threads[0]->readIntReg2(inst->staticInst->srcRegIdx(i)), cpu.varVulLast2[cpu.inVarVulTemp(inst->staticInst->srcRegIdx(i))], sym_str);
+                        }
+                    }
+                }
+                
+                for(int i = 0; i < inst->staticInst->numDestRegs(); i++) {
+                    //DPRINTF(FI, "DST %d is %d\n", i, inst->staticInst->destRegIdx(i));
+                    if( inst->staticInst->destRegIdx(i) < 16) {
+                        if(cpu.inVarVulTemp(inst->staticInst->destRegIdx(i)) != 0) {
+                            //DPRINTF(FI, "DST %d is %#x\n", i, cpu.inVarVulTemp(inst->staticInst->destRegIdx(i)));
+                            bool nofound = true;                        
+                            cpu.varVulLast2[cpu.inVarVulTemp(inst->staticInst->destRegIdx(i))] = curTick();
+                        
+                            for(int j = 0; j < inst->staticInst->numSrcRegs(); j++) {
+                                if(condInst && j == inst->staticInst->numSrcRegs()-1)
+                                    break;
+                                
+                                if( inst->staticInst->srcRegIdx(j) == inst->staticInst->destRegIdx(i)) {
+                                    nofound = false;
+                                    break;
+                                }
+                            }
+
+                            if(nofound || inst->staticInst->isLoad()) {
+								//DPRINTF(FI, "DST %d is %d\n", i, inst->staticInst->destRegIdx(i));
+								cpu.varVulTemp.erase(cpu.inVarVulTemp(inst->staticInst->destRegIdx(i)));
+                                //cpu.varVulTemp[cpu.inVarVulTemp(inst->staticInst->destRegIdx(i))] = -1;
+                            }
+                        }
+                    }
+                }
+				
+				if (inst->staticInst->isLoad()) {
+                    for(int i = 0; i < inst->staticInst->numDestRegs(); i++) {
+                        if( inst->staticInst->destRegIdx(i) < 16) {
+                            cpu.varVulTemp[inst->memAddr] = inst->staticInst->destRegIdx(i);
+                            cpu.varVulLast2[inst->memAddr] = curTick();
+							//DPRINTF(FI, "cpu.varVulLast2[%#x] is %d\n", inst->memAddr, cpu.varVulLast2[inst->memAddr]);
+							//DPRINTF(FI, "cpu.varVulLast2[%#x] is %d\n", cpu.inVarVulTemp(inst->staticInst->destRegIdx(i)), cpu.varVulLast2[cpu.inVarVulTemp(inst->staticInst->destRegIdx(i))]);
+                            DPRINTF(VarVul, "VarVulSet\t%#x\tr%d\t%#x\t%d\t%s\n", cpu.inVarVulTemp(inst->staticInst->destRegIdx(i)), inst->staticInst->destRegIdx(i), cpu.threads[0]->readIntReg2(inst->staticInst->destRegIdx(i)), cpu.varVulLast2[cpu.inVarVulTemp(inst->staticInst->destRegIdx(i))], sym_str);
+                            //DPRINTF(FI, "VarVulSet\t%#x\tr%d\t%d\n", inst->memAddr, inst->staticInst->destRegIdx(i), cpu.varVulLast2[inst->memAddr]);
+                            inst->memAddr += 4;
+                        }
+                    }
+                    
+                    //DPRINTF(FI, "MemVul\t%#x\t%d\n", inst->memAddr, cpu.varVulTime[inst->memAddr]);
+                }
+                
+                /* if(inst->staticInst->isStore()) {
+                    if(!cpu.inVarVul(inst->memAddr)) {
+                        cpu.varVulTime[inst->memAddr] = 0;
+                        //cpu.varVulTemp[inst->memAddr] = 0;
+                        cpu.varVulLast[inst->memAddr] = curTick();
+                    }
+                    
+                    else {
+                        cpu.varVulLast[inst->memAddr] = curTick();
+                    }
+                    
+                    //DPRINTF(FI, "MemVul\t%#x\t%d\n", inst->memAddr, cpu.varVulTime[inst->memAddr]);
+                } */
+                
+                /* else if (inst->staticInst->isLoad()) {
+                    if(!cpu.inVarVul(inst->memAddr)) {
+                        //cpu.varVulTime[inst->memAddr] += curTick() - cpu.varVulLast[inst->memAddr];
+                        cpu.varVulTemp[inst->memAddr] = ;
+                        cpu.varVulLast[inst->memAddr] = curTick();
+                    }
+                    
+                     else {
+                        cpu.varVulTime[inst->memAddr] += curTick() - cpu.varVulLast[inst->memAddr];
+                        cpu.varVulLast[inst->memAddr] = curTick();
+                    } */
+            }
+            
+            //YOHAN: Count the number of instruction (branch)
+            if(inst->staticInst->isControl() || inst->staticInst->isSyscall()) {
+                
+                Addr addr = inst->pc.instAddr();
+                std::string my_inst = inst->staticInst->generateDisassembly(addr, debugSymbolTable);
+                
+                std::string sym_str;
+                Addr sym_addr;
+                debugSymbolTable->findNearestSymbol(addr, sym_str, sym_addr);
+                
+                if(!cpu.inNumBranch(inst->pc.instAddr())) {
+                    cpu.numBranch[inst->pc.instAddr()] = 1;
+                    cpu.typeBranch[inst->pc.instAddr()] = my_inst;
+                    cpu.funcBranch[inst->pc.instAddr()] = sym_str;
+                }
+                
+                else {
+                    cpu.numBranch[inst->pc.instAddr()] += 1;
+                }
             }
             
             //YOHAN: validate exeuction
@@ -2010,6 +2245,17 @@ Execute::evaluate()
     /* Wake up if we need to tick again */
     if (need_to_tick)
         cpu.wakeupOnEvent(Pipeline::ExecuteStageId);
+    
+    std::string sym_str;
+    Addr sym_addr;
+    debugSymbolTable->findNearestSymbol(cpu.getContext(0)->instAddr(), sym_str, sym_addr);
+    std::set<std::string>::iterator iter;
+    
+    iter = cpu.main_func.find(sym_str);
+    
+    if (need_to_tick && iter != cpu.main_func.end()){
+        cpu.numMainCycles++;
+    }
 
     /* Note activity of following buffer */
     if (!branch.isBubble())
@@ -2320,6 +2566,53 @@ Execute::injectFaultToFu() {
     scoreboard[injectThread].injectFault = true;
     scoreboard[injectThread].injectLoc = injectLoc;
     return true;
+}
+
+//YOHAN: Make control flow violation
+void
+Execute::flipControl(MinorDynInstPtr inst)
+{   
+    for (int i = 0; i < 2; i++)
+        inst->staticInst->corruptedSrcReg[i] = cpu.threads[0]->readCCReg(i);
+    
+    bool flag = false;
+
+    for(int i=0; i<4; i++) {
+        if (flag)
+            break;
+        for(int j=0; j<2; j++) {
+            if (flag)
+                break;
+            for(int k=0; k<2; k++) {
+                cpu.threads[0]->setCCReg(0, i);
+                cpu.threads[0]->setCCReg(1, j);
+                cpu.threads[0]->setCCReg(2, k);
+                
+                ExecContext context(cpu, *cpu.threads[inst->id.threadId], *this, inst);
+                inst->staticInst->execute(&context, inst->traceData);
+                if(inst->origPred != context.readPredicate()) {
+                    flag = true;
+                    break;
+                }
+            }
+        }
+    }        
+    
+    for (int i = 0; i < 2; i++)
+        cpu.threads[0]->setCCReg(i, inst->staticInst->corruptedSrcReg[i]);
+    
+    cpu.injectFaultBranch = 0;
+
+    Addr addr = inst->pc.instAddr();
+    std::string my_inst = inst->staticInst->generateDisassembly(addr, debugSymbolTable);
+    std::string sym_str;
+    Addr sym_addr;
+    debugSymbolTable->findNearestSymbol(addr, sym_str, sym_addr);
+    
+    if(inst->origPred)
+        DPRINTF(FI, "Branch is flipped from Taken\tNotTaken\t%s\t%s\n", my_inst, sym_str);
+    else
+        DPRINTF(FI, "Branch is flipped from NotTaken\tTaken\t%s\t%s\n", my_inst, sym_str);
 }
 
 //YOHAN: Exit when corrupted reg is not used
